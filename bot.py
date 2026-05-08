@@ -2,7 +2,9 @@ import os
 import re
 import logging
 import time
+import threading
 import requests
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -10,7 +12,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "8708458419:AAGYTkq2IiUbPRCUgwuOf1fTWqukkAL0N3c")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
+PORT = int(os.environ.get("PORT", 10000))
 
 FEE_MESSAGE = """
 ╔══════════════════════════════╗
@@ -37,11 +40,26 @@ FEE_MESSAGE = """
 𝗥𝗚 ~ @𝗣𝗘𝗔𝗖𝗘𝗘𝗦𝗖𝗥𝗢𝗪𝗦𝗘𝗥𝗩𝗜𝗖𝗘 🫶❤️‍🩹
 """
 
+# ── Dummy HTTP server so Render sees an open port ──────────────────────────
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Peace Escrow Bot is running!")
+
+    def log_message(self, format, *args):
+        pass  # Suppress noisy access logs
+
+def run_http_server():
+    server = HTTPServer(("0.0.0.0", PORT), HealthHandler)
+    logger.info(f"🌐 Health-check server listening on port {PORT}")
+    server.serve_forever()
+
+# ── Telegram helpers ────────────────────────────────────────────────────────
 def contains_fee_keyword(text):
     if not text:
         return False
-    pattern = r'\b(fee|fees)\b'
-    return bool(re.search(pattern, text, re.IGNORECASE))
+    return bool(re.search(r'\b(fee|fees)\b', text, re.IGNORECASE))
 
 def get_updates(offset=None):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates"
@@ -82,16 +100,21 @@ def process_update(update):
     chat_id = chat.get("id")
     message_id = message.get("message_id")
 
-    # Only respond in groups and supergroups
-    if chat_type not in ["group", "supergroup"]:
+    # Works in groups, supergroups AND private chats
+    if chat_type not in ["group", "supergroup", "private"]:
         return
 
     if contains_fee_keyword(text):
-        logger.info(f"Fee keyword detected in chat {chat_id}, message: {text[:50]}")
+        logger.info(f"Fee keyword detected in {chat_type} {chat_id}")
         send_message(chat_id, FEE_MESSAGE, reply_to_message_id=message_id)
 
+# ── Main ────────────────────────────────────────────────────────────────────
 def main():
-    logger.info("🚀 Peace Escrow Bot started (Polling mode)...")
+    # Start HTTP server in background thread
+    t = threading.Thread(target=run_http_server, daemon=True)
+    t.start()
+
+    logger.info("🚀 Peace Escrow Bot polling started...")
     offset = None
 
     while True:
@@ -99,19 +122,16 @@ def main():
             updates_data = get_updates(offset)
 
             if not updates_data or not updates_data.get("ok"):
-                logger.warning("Failed to get updates, retrying in 5 seconds...")
+                logger.warning("Failed to get updates, retrying in 5s...")
                 time.sleep(5)
                 continue
 
-            updates = updates_data.get("result", [])
-
-            for update in updates:
-                update_id = update.get("update_id")
+            for update in updates_data.get("result", []):
                 process_update(update)
-                offset = update_id + 1
+                offset = update["update_id"] + 1
 
         except KeyboardInterrupt:
-            logger.info("Bot stopped by user.")
+            logger.info("Bot stopped.")
             break
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
@@ -119,3 +139,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
