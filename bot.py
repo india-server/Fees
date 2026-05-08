@@ -382,7 +382,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "/admins — List admins\n\n"
             "📊 *Stats & Tools*\n"
             "/stats — Bot statistics\n"
-            "/fee <amount> — Calculate escrow fee\n"
+            "/p <amount> — Calculate escrow fee\n"
             "/fees — View fee structure",
             parse_mode="Markdown"
         )
@@ -397,7 +397,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "/setmsg — Set force join message\n"
             "/setimage — Set force join image\n"
             "/stats — Bot statistics\n"
-            "/fee <amount> — Calculate escrow fee\n"
+            "/p <amount> — Calculate escrow fee\n"
             "/fees — View fee structure",
             parse_mode="Markdown"
         )
@@ -405,7 +405,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         name = update.effective_user.first_name or "User"
         await update.message.reply_text(
             f"✅ *Access Granted!* Welcome, {name}!\n\n"
-            "Use /fee <amount> to calculate your escrow fee.\n"
+            "Use /p <amount> to calculate your escrow fee.\n"
             "Use /fees to view the full fee structure.",
             parse_mode="Markdown"
         )
@@ -438,8 +438,8 @@ async def fees_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "💵 ₹2,001 – ₹3,000     ▶  2.5%\n"
         "💵 Above ₹3,000        ▶  3%\n\n"
         "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        "💡 Use `/fee <amount>` to calculate\n"
-        "Example: `/fee 1500`\n\n"
+        "💡 Use `/p <amount>` to calculate\n"
+        "Example: `/p 1500`\n\n"
         "🔐 *Safe • Secure • Trusted*\n"
         "RG ~ @PEACEESCROWSERVICE"
     )
@@ -474,10 +474,10 @@ async def fee_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "❌ *Invalid Usage!*\n\n"
             "✅ *Correct Format:*\n"
-            "`/fee 1500`\n"
-            "`/fee 2500`\n"
-            "`/fee 500`\n\n"
-            "📌 Send the deal amount after /fee",
+            "`/p 1500`\n"
+            "`/p 2500`\n"
+            "`/p 500`\n\n"
+            "📌 Send the deal amount after /p",
             parse_mode="Markdown"
         )
         return
@@ -589,7 +589,7 @@ async def fee_keyword_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
             "💵 ₹2,001 – ₹3,000     ▶  2.5%\n"
             "💵 Above ₹3,000        ▶  3%\n\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "💡 Use `/fee <amount>` to calculate\n\n"
+            "💡 Use `/p <amount>` to calculate\n\n"
             "🔐 *Safe • Secure • Trusted*\n"
             "RG ~ @PEACEESCROWSERVICE"
         )
@@ -613,7 +613,7 @@ async def show_fees_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
         "💵 ₹2,001 – ₹3,000     ▶  2.5%\n"
         "💵 Above ₹3,000        ▶  3%\n\n"
         "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        "💡 Use `/fee <amount>` to calculate\n\n"
+        "💡 Use `/p <amount>` to calculate\n\n"
         "🔐 *Safe • Secure • Trusted*\n"
         "RG ~ @PEACEESCROWSERVICE"
     )
@@ -800,7 +800,7 @@ def main():
     app.add_handler(CommandHandler("start", start))
 
     # Fee commands
-    app.add_handler(CommandHandler("fee", fee_cmd))
+    app.add_handler(CommandHandler("p", fee_cmd))
     app.add_handler(CommandHandler("fees", fees_cmd))
 
     # Channel management
