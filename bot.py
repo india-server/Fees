@@ -1,141 +1,262 @@
 import os
 import re
-import logging
 import time
+import logging
 import threading
-import requests
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger(__name__)
+import requests
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
+# =========================================================
+# LOGGING
+# =========================================================
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s"
+)
+
+logger = logging.getLogger("PeaceEscrowBot")
+
+# =========================================================
+# CONFIG
+# =========================================================
+
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+
+if not BOT_TOKEN:
+    raise ValueError("BOT_TOKEN environment variable missing.")
+
 PORT = int(os.environ.get("PORT", 10000))
+
+BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
+
+# =========================================================
+# MESSAGE
+# =========================================================
 
 FEE_MESSAGE = """
 ╔══════════════════════════════╗
-║   💰 𝗣𝗘𝗔𝗖𝗘 𝗘𝗦𝗖𝗥𝗢𝗪 𝗦𝗘𝗥𝗩𝗜𝗖𝗘   ║
-║      𝗙𝗘𝗘𝗦 𝗦𝗧𝗥𝗨𝗖𝗧𝗨𝗥𝗘 📊      ║
+║   💰 PEACE ESCROW SERVICE   ║
+║      FEES STRUCTURE 📊      ║
 ╚══════════════════════════════╝
 
-📐 𝗗𝗘𝗔𝗟 𝗔𝗠𝗢𝗨𝗡𝗧 ──▶ 𝗖𝗛𝗔𝗥𝗚𝗘𝗦
+📐 DEAL AMOUNT ──▶ CHARGES
 
-┌─────────────────────────────┐
-│ 💵 𝗨𝗻𝗱𝗲𝗿 𝗥𝗦 𝟱𝟬𝟬         ▶  𝗥𝗦 𝟱 │
-├─────────────────────────────┤
-│ 💵 𝗥𝗦 𝟱𝟬𝟭 – 𝗥𝗦 𝟭𝟬𝟬𝟬    ▶  𝟭%   │
-├─────────────────────────────┤
-│ 💵 𝗥𝗦 𝟭𝟬𝟬𝟭 – 𝗥𝗦 𝟮𝟬𝟬𝟬   ▶  𝟮%   │
-├─────────────────────────────┤
-│ 💵 𝗥𝗦 𝟮𝟬𝟬𝟭 – 𝗥𝗦 𝟯𝟬𝟬𝟬   ▶  𝟮.𝟱% │
-├─────────────────────────────┤
-│ 💵 𝗔𝗯𝗼𝘃𝗲 𝗥𝗦 𝟯𝟬𝟬𝟬       ▶  𝟯%   │
-└─────────────────────────────┘
+💵 Under RS 500         ▶ RS 5
+💵 RS 501 – RS 1000    ▶ 1%
+💵 RS 1001 – RS 2000   ▶ 2%
+💵 RS 2001 – RS 3000   ▶ 2.5%
+💵 Above RS 3000       ▶ 3%
 
-🔐 𝗦𝗮𝗳𝗲 • 𝗦𝗲𝗰𝘂𝗿𝗲 • 𝗧𝗿𝘂𝘀𝘁𝗲𝗱
+🔐 Safe • Secure • Trusted
 
-𝗥𝗚 ~ @𝗣𝗘𝗔𝗖𝗘𝗘𝗦𝗖𝗥𝗢𝗪𝗦𝗘𝗥𝗩𝗜𝗖𝗘 🫶❤️‍🩹
+RG ~ @PEACEEscrowService
 """
 
-# ── Dummy HTTP server so Render sees an open port ──────────────────────────
+# =========================================================
+# HEALTH CHECK SERVER
+# =========================================================
+
 class HealthHandler(BaseHTTPRequestHandler):
+
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b"Peace Escrow Bot is running!")
+        self.wfile.write(b"Peace Escrow Bot Running")
 
     def log_message(self, format, *args):
-        pass  # Suppress noisy access logs
+        return
 
-def run_http_server():
+
+def run_health_server():
     server = HTTPServer(("0.0.0.0", PORT), HealthHandler)
-    logger.info(f"🌐 Health-check server listening on port {PORT}")
+
+    logger.info(f"🌐 Health server running on port {PORT}")
+
     server.serve_forever()
 
-# ── Telegram helpers ────────────────────────────────────────────────────────
-def contains_fee_keyword(text):
+# =========================================================
+# KEYWORD CHECK
+# =========================================================
+
+def contains_fee_keyword(text: str) -> bool:
     if not text:
         return False
-    return bool(re.search(r'\b(fee|fees)\b', text, re.IGNORECASE))
+
+    pattern = r"\b(fee|fees|charge|charges|pricing|rate|rates)\b"
+
+    return bool(re.search(pattern, text, re.IGNORECASE))
+
+# =========================================================
+# TELEGRAM API
+# =========================================================
 
 def get_updates(offset=None):
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates"
-    params = {"timeout": 30, "allowed_updates": ["message"]}
+
+    url = f"{BASE_URL}/getUpdates"
+
+    params = {
+        "timeout": 30,
+        "allowed_updates": ["message"]
+    }
+
     if offset:
         params["offset"] = offset
+
     try:
-        response = requests.get(url, params=params, timeout=35)
-        return response.json()
+
+        response = requests.get(
+            url,
+            params=params,
+            timeout=35
+        )
+
+        data = response.json()
+
+        if not data.get("ok"):
+            logger.error(f"Telegram API Error: {data}")
+
+        return data
+
     except Exception as e:
-        logger.error(f"Error getting updates: {e}")
+        logger.error(f"getUpdates Exception: {e}")
         return None
 
+
 def send_message(chat_id, text, reply_to_message_id=None):
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+
+    url = f"{BASE_URL}/sendMessage"
+
     payload = {
         "chat_id": chat_id,
         "text": text,
-        "parse_mode": "HTML"
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True
     }
+
     if reply_to_message_id:
         payload["reply_to_message_id"] = reply_to_message_id
+
     try:
-        response = requests.post(url, json=payload, timeout=10)
-        return response.json()
+
+        response = requests.post(
+            url,
+            json=payload,
+            timeout=15
+        )
+
+        data = response.json()
+
+        if not data.get("ok"):
+            logger.error(f"sendMessage Error: {data}")
+
+        return data
+
     except Exception as e:
-        logger.error(f"Error sending message: {e}")
+        logger.error(f"sendMessage Exception: {e}")
         return None
 
+# =========================================================
+# PROCESS UPDATES
+# =========================================================
+
 def process_update(update):
+
     message = update.get("message")
+
     if not message:
         return
 
     text = message.get("text", "")
+
     chat = message.get("chat", {})
-    chat_type = chat.get("type", "")
+
+    chat_type = chat.get("type")
     chat_id = chat.get("id")
+
     message_id = message.get("message_id")
 
-    # Works in groups, supergroups AND private chats
-    if chat_type not in ["group", "supergroup", "private"]:
+    # Only groups/supergroups/private
+    if chat_type not in ("group", "supergroup", "private"):
         return
 
     if contains_fee_keyword(text):
-        logger.info(f"Fee keyword detected in {chat_type} {chat_id}")
-        send_message(chat_id, FEE_MESSAGE, reply_to_message_id=message_id)
 
-# ── Main ────────────────────────────────────────────────────────────────────
+        logger.info(
+            f"💰 Fee keyword detected | Chat: {chat_id}"
+        )
+
+        send_message(
+            chat_id=chat_id,
+            text=FEE_MESSAGE,
+            reply_to_message_id=message_id
+        )
+
+# =========================================================
+# MAIN
+# =========================================================
+
 def main():
-    # Start HTTP server in background thread
-    t = threading.Thread(target=run_http_server, daemon=True)
-    t.start()
+
+    # Start health server
+    threading.Thread(
+        target=run_health_server,
+        daemon=True
+    ).start()
 
     logger.info("🚀 Peace Escrow Bot polling started...")
+
     offset = None
 
     while True:
+
         try:
+
             updates_data = get_updates(offset)
 
-            if not updates_data or not updates_data.get("ok"):
-                logger.warning("Failed to get updates, retrying in 5s...")
+            if not updates_data:
+
+                logger.warning(
+                    "No response from Telegram API."
+                )
+
                 time.sleep(5)
                 continue
 
-            for update in updates_data.get("result", []):
-                process_update(update)
+            if not updates_data.get("ok"):
+
+                logger.warning(
+                    "Telegram returned non-ok response."
+                )
+
+                time.sleep(5)
+                continue
+
+            updates = updates_data.get("result", [])
+
+            for update in updates:
+
                 offset = update["update_id"] + 1
 
+                process_update(update)
+
         except KeyboardInterrupt:
-            logger.info("Bot stopped.")
+
+            logger.info("Bot stopped manually.")
             break
+
         except Exception as e:
-            logger.error(f"Unexpected error: {e}")
+
+            logger.exception(
+                f"Unexpected Main Loop Error: {e}"
+            )
+
             time.sleep(5)
+
+# =========================================================
+# START
+# =========================================================
 
 if __name__ == "__main__":
     main()
