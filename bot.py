@@ -269,7 +269,7 @@ def get_fee_slab(amount: float) -> str:
     elif amount <= 3000:
         return "• ₹𝟐𝟎𝟎𝟏 𝐓𝐎 ₹𝟑𝟎𝟎𝟎       →  𝟐.𝟓%"
     else:
-        return "• 𝐔𝐏𝐏𝐄𝐑 𝐓𝐇𝐀𝐍 ₹𝟑𝟎𝟎𝟎     →  𝟐"
+        return "• 𝐔𝐏𝐏𝐄𝐑 𝐓𝐇𝐀𝐍 ₹𝟑𝟎𝟎𝟎     →  𝟐%"
 
 def log_fee_calc(uid: int, amount: float, fee: float):
     """Log fee calculation to MongoDB"""
