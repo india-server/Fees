@@ -261,15 +261,15 @@ def get_fee_slab(amount: float) -> str:
     if amount <= 0:
         return "Invalid"
     elif amount < 500:
-        return "UNDER ₹500 → ₹5 FLAT"
+        return "• 𝐔𝐍𝐃𝐄𝐑 ₹𝟓𝟎𝟎           →  ₹𝟓 𝐅𝐋𝐀𝐓"
     elif amount <= 1000:
-        return "₹501 TO ₹1000 → ₹10 FLAT"
+        return "• ₹𝟓𝟎𝟏 𝐓𝐎 ₹𝟏𝟎𝟎𝟎        →  ₹𝟏𝟎 𝐅𝐋𝐀𝐓"
     elif amount <= 2000:
-        return "₹1001 TO ₹2000 → ₹20 FLAT"
+        return "• ₹𝟏𝟎𝟎𝟏 𝐓𝐎 ₹𝟐𝟎𝟎𝟎       →  ₹𝟐𝟎 𝐅𝐋𝐀𝐓"
     elif amount <= 3000:
-        return "₹2001 TO ₹3000 → 2.5%"
+        return "• ₹𝟐𝟎𝟎𝟏 𝐓𝐎 ₹𝟑𝟎𝟎𝟎       →  𝟐.𝟓%"
     else:
-        return "UPPER THAN ₹3000 → 2%"
+        return "• 𝐔𝐏𝐏𝐄𝐑 𝐓𝐇𝐀𝐍 ₹𝟑𝟎𝟎𝟎     →  𝟐"
 
 def log_fee_calc(uid: int, amount: float, fee: float):
     """Log fee calculation to MongoDB"""
@@ -594,16 +594,13 @@ async def show_fees_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
     q = update.callback_query
     await q.answer()
     text = (
-        "╔══════════════════════════════╗\n"
-        "║   💰 PEACE ESCROW SERVICE   ║\n"
-        "║      CHARGES ACCORDING TO    ║\n"
-        "║        DEAL AMOUNT ‼️        ║\n"
-        "╚══════════════════════════════╝\n\n"
-        "• UNDER ₹500           →  ₹5 FLAT\n\n"
-        "• ₹501 TO ₹1000        →  ₹10 FLAT\n\n"
-        "• ₹1001 TO ₹2000       →  ₹20 FLAT\n\n"
-        "• ₹2001 TO ₹3000       →  2.5%\n\n"
-        "• UPPER THAN ₹3000     →  2%\n\n"
+        "CHARGES ACCORDING TO\n"
+        "DEAL AMOUNT ‼️     \n\n"
+        "• UNDER ₹500           →  ₹5 FLAT\n"
+        "• ₹501 TO ₹1000        →  ₹10 FLAT\n"
+        "• ₹1001 TO ₹2000       →  ₹20 FLAT\n"
+        "• ₹2001 TO ₹3000       →  2.5%\n"
+        "• UPPER THAN ₹3000     →  2%\n"
         "═══════════════════════════════\n"
         "💡 Use `/p <amount>` To Calculate\n"
         "   Total Amount With Fee\n\n"
