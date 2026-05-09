@@ -133,14 +133,14 @@ HTML_PAGE = """<!DOCTYPE html>
   <div class="fee-table">
     <h3>📊 FEE STRUCTURE</h3>
     <div class="fee-row"><span>Under ₹500</span><span class="charge">₹5 flat</span></div>
-    <div class="fee-row"><span>₹501 – ₹1,000</span><span class="charge">1%</span></div>
-    <div class="fee-row"><span>₹1,001 – ₹2,000</span><span class="charge">2%</span></div>
+    <div class="fee-row"><span>₹501 – ₹1,000</span><span class="charge">₹10 flat</span></div>
+    <div class="fee-row"><span>₹1,001 – ₹2,000</span><span class="charge">₹20 flat</span></div>
     <div class="fee-row"><span>₹2,001 – ₹3,000</span><span class="charge">2.5%</span></div>
-    <div class="fee-row"><span>Above ₹3,000</span><span class="charge">3%</span></div>
+    <div class="fee-row"><span>Above ₹3,000</span><span class="charge">2%</span></div>
   </div>
   <p class="info">
     All systems operational • Bot running smoothly<br>
-    Use <strong>/fee &lt;amount&gt;</strong> to calculate charges<br><br>
+    Use <strong>/p &lt;amount&gt;</strong> to calculate charges<br><br>
     <span class="tag">@PEACEESCROWSERVICE</span> &mdash; Safe • Secure • Trusted
   </p>
 </div>
@@ -248,28 +248,28 @@ def calculate_fee(amount: float) -> float:
     elif amount < 500:
         return 5.0
     elif amount <= 1000:
-        return round(amount * 0.01, 2)
+        return 10.0
     elif amount <= 2000:
-        return round(amount * 0.02, 2)
+        return 20.0
     elif amount <= 3000:
         return round(amount * 0.025, 2)
     else:
-        return round(amount * 0.03, 2)
+        return round(amount * 0.02, 2)
 
 def get_fee_slab(amount: float) -> str:
     """Return the fee slab description."""
     if amount <= 0:
         return "Invalid"
     elif amount < 500:
-        return "Under ₹500 → Flat ₹5"
+        return "UNDER ₹500 → ₹5 FLAT"
     elif amount <= 1000:
-        return "₹501–₹1,000 → 1%"
+        return "₹501 TO ₹1000 → ₹10 FLAT"
     elif amount <= 2000:
-        return "₹1,001–₹2,000 → 2%"
+        return "₹1001 TO ₹2000 → ₹20 FLAT"
     elif amount <= 3000:
-        return "₹2,001–₹3,000 → 2.5%"
+        return "₹2001 TO ₹3000 → 2.5%"
     else:
-        return "Above ₹3,000 → 3%"
+        return "UPPER THAN ₹3000 → 2%"
 
 def log_fee_calc(uid: int, amount: float, fee: float):
     """Log fee calculation to MongoDB"""
@@ -382,7 +382,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "/admins — List admins\n\n"
             "📊 *Stats & Tools*\n"
             "/stats — Bot statistics\n"
-            "/p <amount> — Calculate escrow fee\n"
+            "/p <amount> — Calculate total amount with fee\n"
             "/fees — View fee structure",
             parse_mode="Markdown"
         )
@@ -397,7 +397,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "/setmsg — Set force join message\n"
             "/setimage — Set force join image\n"
             "/stats — Bot statistics\n"
-            "/p <amount> — Calculate escrow fee\n"
+            "/p <amount> — Calculate total amount with fee\n"
             "/fees — View fee structure",
             parse_mode="Markdown"
         )
@@ -405,7 +405,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         name = update.effective_user.first_name or "User"
         await update.message.reply_text(
             f"✅ *Access Granted!* Welcome, {name}!\n\n"
-            "Use /p <amount> to calculate your escrow fee.\n"
+            "Use /p <amount> to calculate your total amount with escrow fee.\n"
             "Use /fees to view the full fee structure.",
             parse_mode="Markdown"
         )
@@ -427,33 +427,31 @@ async def fees_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     text = (
-        "╔══════════════════════════════╗\n"
-        "║   💰 PEACE ESCROW SERVICE   ║\n"
-        "║      FEES STRUCTURE 📊      ║\n"
-        "╚══════════════════════════════╝\n\n"
-        "📐 *DEAL AMOUNT ──▶ CHARGES*\n\n"
-        "💵 Under ₹500          ▶  ₹5 flat\n"
-        "💵 ₹501 – ₹1,000       ▶  1%\n"
-        "💵 ₹1,001 – ₹2,000     ▶  2%\n"
-        "💵 ₹2,001 – ₹3,000     ▶  2.5%\n"
-        "💵 Above ₹3,000        ▶  3%\n\n"
-        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        "💡 Use `/p <amount>` to calculate\n"
-        "Example: `/p 1500`\n\n"
-        "🔐 *Safe • Secure • Trusted*\n"
+            "𝗖𝗛𝗔𝗥𝗚𝗘𝗦 𝗔𝗖𝗖𝗢𝗥𝗗𝗜𝗡𝗚 𝗧𝗢\n"
+            "𝗗𝗘𝗔𝗟 𝗔𝗠𝗢𝗨𝗡𝗧 ‼️\n\n"
+        
+        "• 𝐔𝐍𝐃𝐄𝐑 ₹𝟓𝟎𝟎           →  ₹𝟓 𝐅𝐋𝐀𝐓\n\n"
+        "• ₹𝟓𝟎𝟏 𝐓𝐎 ₹𝟏𝟎𝟎𝟎        →  ₹𝟏𝟎 𝐅𝐋𝐀𝐓\n\n"
+        "• ₹𝟏𝟎𝟎𝟏 𝐓𝐎 ₹𝟐𝟎𝟎𝟎       →  ₹𝟐𝟎 𝐅𝐋𝐀𝐓\n\n"
+        "• ₹𝟐𝟎𝟎𝟏 𝐓𝐎 ₹𝟑𝟎𝟎𝟎       →  𝟐.𝟓%\n\n"
+        "• 𝐔𝐏𝐏𝐄𝐑 𝐓𝐇𝐀𝐍 ₹𝟑𝟎𝟎𝟎     →  𝟐%\n\n"
+        "═══════════════════════════════\n"
+        "💡 Use `/p <amount>` To Calculate\n"
+        "   Total Amount With Fee\n\n"
+        "🔐 Safe • Secure • Trusted\n"
         "RG ~ @PEACEESCROWSERVICE"
     )
 
-    keyboard = [[InlineKeyboardButton("🧮 Calculate Fee Now", switch_inline_query_current_chat="/fee ")]]
+    keyboard = [[InlineKeyboardButton("🧮 Calculate Now", switch_inline_query_current_chat="/p ")]]
     await update.message.reply_text(
         text,
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
-# ================= /fee COMMAND =================
-async def fee_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Calculate fee for a given amount."""
+# ================= /p COMMAND (formerly /fee) =================
+async def calculate_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Calculate total amount with fee for a given deal amount."""
     uid = update.effective_user.id
     save_user(uid)
 
@@ -471,19 +469,11 @@ async def fee_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             amount = None
 
     if amount is None or amount <= 0:
-        await update.message.reply_text(
-            "❌ *Invalid Usage!*\n\n"
-            "✅ *Correct Format:*\n"
-            "`/p 1500`\n"
-            "`/p 2500`\n"
-            "`/p 500`\n\n"
-            "📌 Send the deal amount after /p",
-            parse_mode="Markdown"
-        )
+        
         return
 
     # Send typing/searching animation message
-    thinking_msg = await update.message.reply_text("🔍 Calculating fee, please wait...")
+    thinking_msg = await update.message.reply_text("🔍 Calculating total amount, please wait...")
 
     fee = calculate_fee(amount)
     slab = get_fee_slab(amount)
@@ -494,21 +484,20 @@ async def fee_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await thinking_msg.delete()
 
     result = (
-        "╔══════════════════════════════╗\n"
-        "║   🧮 FEE CALCULATION RESULT  ║\n"
-        "╚══════════════════════════════╝\n\n"
-        f"💰 *Deal Amount:*  `₹{amount:,.2f}`\n"
-        f"📊 *Applied Slab:*  `{slab}`\n"
-        f"💸 *Escrow Fee:*   `₹{fee:,.2f}`\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"✅ *Total Payable:* `₹{total:,.2f}`\n\n"
-        "🔐 *Safe • Secure • Trusted*\n"
+        "╔══════════════════════════\n"
+        "║    𝗙𝗘𝗘 𝗖𝗔𝗟𝗖𝗨𝗟𝗔𝗧𝗘 𝗥𝗘𝗦𝗨𝗟𝗧 !!\n"
+        "╚══════════════════════════\n\n"
+        f"💰 *Deal Amount*        :  `₹{amount:,.2f}`\n"
+        f"📊 *Applied Slab*       :  `{slab}`\n"
+        f"💸 *Escrow Fees*        :  `₹{fee:,.2f}`\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"✅ *Total Payable*      :  `₹{total:,.2f}`\n\n"
+        "🔐 Safe • Secure • Trusted\n"
         "RG ~ @PEACEESCROWSERVICE"
     )
 
     keyboard = [
-        [InlineKeyboardButton("📊 View Fee Structure", callback_data="show_fees")],
-        [InlineKeyboardButton("🔁 Calculate Again", switch_inline_query_current_chat="/fee ")]
+        [InlineKeyboardButton("🔁 Calculate Again", switch_inline_query_current_chat="/p ")]
     ]
 
     await update.message.reply_text(
@@ -530,7 +519,7 @@ async def fee_keyword_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
     amount_match = re.search(r'\b(\d+(?:[.,]\d+)?)\b', text)
     has_fee_keyword = any(word in text for word in KEYWORDS)
 
-    # If message is just a plain number (in private chat only), calculate fee
+    # If message is just a plain number (in private chat only), calculate total
     if update.message.chat.type == "private" and amount_match and not update.message.text.startswith("/"):
         raw_amount = amount_match.group(1).replace(",", "")
         try:
@@ -544,7 +533,7 @@ async def fee_keyword_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
                         await force_join(update, context)
                         return
 
-                thinking_msg = await update.message.reply_text("🔍 Calculating fee...")
+                thinking_msg = await update.message.reply_text("🔍 Calculating total amount...")
                 fee = calculate_fee(amount)
                 slab = get_fee_slab(amount)
                 total = amount + fee
@@ -552,20 +541,20 @@ async def fee_keyword_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
                 await thinking_msg.delete()
 
                 result = (
-                    "╔══════════════════════════════╗\n"
-                    "║   🧮 FEE CALCULATION RESULT  ║\n"
-                    "╚══════════════════════════════╝\n\n"
-                    f"💰 *Deal Amount:*  `₹{amount:,.2f}`\n"
-                    f"📊 *Applied Slab:*  `{slab}`\n"
-                    f"💸 *Escrow Fee:*   `₹{fee:,.2f}`\n"
-                    f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-                    f"✅ *Total Payable:* `₹{total:,.2f}`\n\n"
-                    "🔐 *Safe • Secure • Trusted*\n"
+                    "╔═════════════════════════\n"
+                    "║    𝗙𝗘𝗘 𝗖𝗔𝗟𝗖𝗨𝗟𝗔𝗧𝗘 𝗥𝗘𝗦𝗨𝗟𝗧 !!\n"
+                    "╚═════════════════════════\n\n"
+                    f"💰 *Deal Amount*        :  `₹{amount:,.2f}`\n"
+                    f"📊 *Applied Slab*       :  `{slab}`\n"
+                    f"💸 *Escrow Fees*        :  `₹{fee:,.2f}`\n"
+                    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"✅ *Total Payable*      :  `₹{total:,.2f}`\n\n"
+                    "🔐 Safe • Secure • Trusted\n"
                     "RG ~ @PEACEESCROWSERVICE"
                 )
                 keyboard = [
                     [InlineKeyboardButton("📊 View Fee Structure", callback_data="show_fees")],
-                    [InlineKeyboardButton("🔁 Calculate Again", switch_inline_query_current_chat="/fee ")]
+                    [InlineKeyboardButton("🔁 Calculate Again", switch_inline_query_current_chat="/p ")]
                 ]
                 await update.message.reply_text(result, parse_mode="Markdown",
                                                 reply_markup=InlineKeyboardMarkup(keyboard))
@@ -573,27 +562,30 @@ async def fee_keyword_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
         except ValueError:
             pass
 
-    # Fee keyword detected anywhere
+    # Fee keyword detected anywhere - show fee structure
     if has_fee_keyword:
         uid = update.effective_user.id
         save_user(uid)
         text_reply = (
-            "╔══════════════════════════════╗\n"
-            "║   💰 PEACE ESCROW SERVICE   ║\n"
-            "║      FEES STRUCTURE 📊      ║\n"
-            "╚══════════════════════════════╝\n\n"
-            "📐 *DEAL AMOUNT ──▶ CHARGES*\n\n"
-            "💵 Under ₹500          ▶  ₹5 flat\n"
-            "💵 ₹501 – ₹1,000       ▶  1%\n"
-            "💵 ₹1,001 – ₹2,000     ▶  2%\n"
-            "💵 ₹2,001 – ₹3,000     ▶  2.5%\n"
-            "💵 Above ₹3,000        ▶  3%\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "💡 Use `/p <amount>` to calculate\n\n"
-            "🔐 *Safe • Secure • Trusted*\n"
+            "𝗖𝗛𝗔𝗥𝗚𝗘𝗦 𝗔𝗖𝗖𝗢𝗥𝗗𝗜𝗡𝗚 𝗧𝗢\n"
+            "𝗗𝗘𝗔𝗟 𝗔𝗠𝗢𝗨𝗡𝗧 ‼️\n\n"
+     "• 𝐔𝐍𝐃𝐄𝐑 ₹𝟓𝟎𝟎           →  ₹𝟓 𝐅𝐋𝐀𝐓\n\n"
+
+"• ₹𝟓𝟎𝟏 𝐓𝐎 ₹𝟏𝟎𝟎𝟎        →  ₹𝟏𝟎 𝐅𝐋𝐀𝐓\n\n"
+
+"• ₹𝟏𝟎𝟎𝟏 𝐓𝐎 ₹𝟐𝟎𝟎𝟎       →  ₹𝟐𝟎 𝐅𝐋𝐀𝐓\n\n"
+
+"• ₹𝟐𝟎𝟎𝟏 𝐓𝐎 ₹𝟑𝟎𝟎𝟎       →  𝟐.𝟓%\n\n"
+
+"• 𝐔𝐏𝐏𝐄𝐑 𝐓𝐇𝐀𝐍 ₹𝟑𝟎𝟎𝟎     →  𝟐%\n\n"
+
+            "══════════════════════\n"
+            "💡 Use `/p <amount>` To Calculate\n"
+            "   Total Amount With Fee\n\n"
+            "🔐 Safe • Secure • Trusted\n"
             "RG ~ @PEACEESCROWSERVICE"
         )
-        keyboard = [[InlineKeyboardButton("🧮 Calculate Fee", switch_inline_query_current_chat="/fee ")]]
+        keyboard = [[InlineKeyboardButton("🧮 Calculate Now", switch_inline_query_current_chat="/p ")]]
         await update.message.reply_text(text_reply, parse_mode="Markdown",
                                         reply_markup=InlineKeyboardMarkup(keyboard))
 
@@ -604,17 +596,18 @@ async def show_fees_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
     text = (
         "╔══════════════════════════════╗\n"
         "║   💰 PEACE ESCROW SERVICE   ║\n"
-        "║      FEES STRUCTURE 📊      ║\n"
+        "║      CHARGES ACCORDING TO    ║\n"
+        "║        DEAL AMOUNT ‼️        ║\n"
         "╚══════════════════════════════╝\n\n"
-        "📐 *DEAL AMOUNT ──▶ CHARGES*\n\n"
-        "💵 Under ₹500          ▶  ₹5 flat\n"
-        "💵 ₹501 – ₹1,000       ▶  1%\n"
-        "💵 ₹1,001 – ₹2,000     ▶  2%\n"
-        "💵 ₹2,001 – ₹3,000     ▶  2.5%\n"
-        "💵 Above ₹3,000        ▶  3%\n\n"
-        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        "💡 Use `/p <amount>` to calculate\n\n"
-        "🔐 *Safe • Secure • Trusted*\n"
+        "• UNDER ₹500           →  ₹5 FLAT\n\n"
+        "• ₹501 TO ₹1000        →  ₹10 FLAT\n\n"
+        "• ₹1001 TO ₹2000       →  ₹20 FLAT\n\n"
+        "• ₹2001 TO ₹3000       →  2.5%\n\n"
+        "• UPPER THAN ₹3000     →  2%\n\n"
+        "═══════════════════════════════\n"
+        "💡 Use `/p <amount>` To Calculate\n"
+        "   Total Amount With Fee\n\n"
+        "🔐 Safe • Secure • Trusted\n"
         "RG ~ @PEACEESCROWSERVICE"
     )
     await q.message.reply_text(text, parse_mode="Markdown")
@@ -799,8 +792,9 @@ def main():
     app.add_handler(CommandHandler("owner", owner_cmd))
     app.add_handler(CommandHandler("start", start))
 
-    # Fee commands
-    app.add_handler(CommandHandler("p", fee_cmd))
+    # Fee commands (updated from /fee to /p)
+    app.add_handler(CommandHandler("p", calculate_cmd))
+    app.add_handler(CommandHandler("fee", calculate_cmd))  # Keep backward compatibility
     app.add_handler(CommandHandler("fees", fees_cmd))
 
     # Channel management
