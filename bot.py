@@ -507,7 +507,7 @@ async def calculate_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # ================= FEE KEYWORD AUTO-REPLY =================
-KEYWORDS = ["fee", "fees", "charge", "charges", "pricing", "rate", "rates", "kitna", "how much"]
+KEYWORDS = ["fee", "fees"]
 
 async def fee_keyword_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Auto-reply fee structure when keywords are detected in chat."""
